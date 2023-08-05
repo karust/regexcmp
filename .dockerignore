@@ -1,0 +1,10 @@
+**/regex
+**/.dev
+**/.git
+**/test_data
+*.md
+*.gif
+*.png
+**/hyperscan
+**/yara
+**/*.profiling
