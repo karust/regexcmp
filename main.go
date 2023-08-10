@@ -70,7 +70,7 @@ var RootCmd = &cobra.Command{
 		}
 
 		fmt.Println("Generate data...")
-		var data = bytes.Repeat([]byte("mail@mail.co и nmber=+71112223334 URI:https://google.com 1.1.1.1 3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5 "), config.repeatScanTimes)
+		var data = bytes.Repeat([]byte("mail@mail.co number=+71112223334 SSN:123-45-6789 1.1.1.1 3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5 йцук"), config.repeatScanTimes)
 		var locData *[]byte
 		locData = &data
 
@@ -87,18 +87,18 @@ var RootCmd = &cobra.Command{
 
 		for _, name := range config.execOrder {
 			engine := config.testCases[name]
-			fmt.Printf("Run %v:\n", strings.ToUpper(name))
+			fmt.Printf("\nRun %v:\n", strings.ToUpper(name))
 			//fmt.Printf("Free memory: %dMB\n", memory.FreeMemory()/1024/1024)
 
 			if config.IsGroupRun {
 				err := runGroup(engine, locData)
 				if err != nil {
-					fmt.Printf("Error during test: %v", err)
+					fmt.Printf("Error during test: %v\n", err)
 				}
 			} else {
 				err := runSingle(engine, locData)
 				if err != nil {
-					fmt.Printf("Error during test: %v", err)
+					fmt.Printf("Error during test: %v\n", err)
 				}
 			}
 		}
@@ -111,8 +111,8 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&config.IsDisplayOutput, "display", "d", false, "Display matched results")
 	RootCmd.PersistentFlags().BoolVarP(&config.IsGroupRun, "group", "g", false, "Run grouped regexps (not individually)")
 	RootCmd.PersistentFlags().BoolVarP(&config.IsPrintGroupRegexp, "print", "p", false, "Print constructed group regexp")
-	RootCmd.PersistentFlags().StringVarP(&config.RegexFilePath, "rfile", "r", "./test/regexps.txt", "Host address to run server")
-	RootCmd.PersistentFlags().StringVarP(&config.ScanFilePath, "sfile", "s", "./test/scanfile.txt", "Host address to run server")
+	//RootCmd.PersistentFlags().StringVarP(&config.RegexFilePath, "rfile", "r", "./test/regexps.txt", "Host address to run server")
+	//RootCmd.PersistentFlags().StringVarP(&config.ScanFilePath, "sfile", "s", "./test/scanfile.txt", "Host address to run server")
 	RootCmd.PersistentFlags().IntVarP(&config.NumberMatching, "matching", "m", 0, "Number of additional matching regexps")
 	RootCmd.PersistentFlags().IntVarP(&config.NumberNonMatching, "nonmatching", "n", 0, "Number of additional non-matching regexps")
 }
