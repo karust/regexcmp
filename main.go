@@ -42,9 +42,10 @@ var RootCmd = &cobra.Command{
 			"re2":     &engines.Re2{},
 			"hyper":   &engines.Hyper{},
 			"yara":    &engines.Yara{},
+			"regexp2": &engines.Regexp2{},
 		}
 
-		config.execOrder = []string{"rure", "pcre", "re2", "hyper", "yara", "default"}
+		config.execOrder = []string{"rure", "pcre", "re2", "hyper", "yara", "regexp2", "default"}
 
 		initRegexps()
 	},
