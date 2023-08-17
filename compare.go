@@ -15,26 +15,28 @@ type RegexpEngine interface {
 var allRegexps = make(map[string]string)
 
 func initRegexps() {
-	allRegexps["email"] = `[\w\.+-]+@[\w\.-]+\.[\w\.-]+`
-	//allRegexps["uri"] = `[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?`
-
-	//allRegexps["email1"] = `[a-z0-9_\.-]+\@[\da-z\.-]+\.[a-z\.]{2,6}`
-	//allRegexps["email2"] = `([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x22([^\x0d\x22\x5c\x80-\xff]|\x5c[\x00-\x7f])*\x22))*\x40([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d)(\x2e([^\x00-\x20\x22\x28\x29\x2c\x2e\x3a-\x3c\x3e\x40\x5b-\x5d\x7f-\xff]+|\x5b([^\x0d\x5b-\x5d\x80-\xff]|\x5c[\x00-\x7f])*\x5d))*`
-	//allRegexps["email3"] = `(?P<name>[-\w\d\.]+?)(?:\s+at\s+|\s*@\s*|\s*(?:[\[\]@]){3}\s*)(?P<host>[-\w\d\.]*?)\s*(?:dot|\.|(?:[\[\]dot\.]){3,5})\s*(?P<domain>\w+)`
-
+	allRegexps["email"] = `(?P<name>[-\w\d\.]+?)(?:\s+at\s+|\s*@\s*|\s*(?:[\[\]@]){3}\s*)(?P<host>[-\w\d\.]*?)\s*(?:dot|\.|(?:[\[\]dot\.]){3,5})\s*(?P<domain>\w+)`
 	allRegexps["bitcoin"] = `\b([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[ac-hj-np-zAC-HJ-NP-Z02-9]{11,71})`
-	allRegexps["ip"] = `(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)`
 	allRegexps["ssn"] = `\d{3}-\d{2}-\d{4}`
+	allRegexps["uri"] = `[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?`
+	allRegexps["tel"] = `\+\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}`
 
-	allRegexps["uri"] = `(?P<protocol>(?:[^:]+)s?)?:\/\/(?:(?P<user>[^:\n\r]+):(?P<pass>[^@\n\r]+)@)?(?P<host>(?:www\.)?(?:[^:\/\n\r]+))(?::(?P<port>\d+))?\/?(?P<request>[^?#\n\r]+)?\??(?P<query>[^#\n\r]*)?\#?(?P<anchor>[^\n\r]*)?`
-	allRegexps["telephone"] = `\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}`
+	if config.GenerateNonMatching {
+		keys := []string{}
+		for name := range allRegexps {
+			keys = append(keys, name)
+		}
+		for _, k := range keys {
+			allRegexps["non_matching_"+k] = allRegexps[k] + k
+		}
+	}
 
 	for i := 0; i < config.NumberNonMatching; i++ {
-		allRegexps[fmt.Sprintf("non_matching%v", i)] = `[a-z0-9_\.-]+\@[\da-z\.-]+\.[a-z\.]{2,6}1`
+		allRegexps[fmt.Sprintf("non_matching%d", i)] = fmt.Sprintf(`[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?%d`, i)
 	}
 
 	for i := 0; i < config.NumberMatching; i++ {
-		allRegexps[fmt.Sprintf("matching%v", i)] = `[\w\.+-]+@[\w\.-]+\.[\w\.-]+`
+		allRegexps[fmt.Sprintf("matching%d", i)] = `[\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?`
 	}
 }
 
@@ -78,7 +80,7 @@ func runSingle(engine RegexpEngine, data *[]byte) error {
 }
 
 func runGroup(engine RegexpEngine, data *[]byte) error {
-	var globM1, globM2 runtime.MemStats
+	var globM1, globM2, globM3 runtime.MemStats
 	runtime.GC()
 	runtime.ReadMemStats(&globM1)
 
@@ -86,6 +88,7 @@ func runGroup(engine RegexpEngine, data *[]byte) error {
 	if err != nil {
 		return err
 	}
+	runtime.ReadMemStats(&globM2)
 
 	start := time.Now()
 	count, err := engine.CountAll(data, config.IsDisplayOutput)
@@ -93,9 +96,13 @@ func runGroup(engine RegexpEngine, data *[]byte) error {
 		return err
 	}
 	elapsed := time.Since(start)
-	runtime.ReadMemStats(&globM2)
+	runtime.ReadMemStats(&globM3)
 
-	fmt.Printf("  [%v regexps] count=%v, mem=%.2fMB, time=%v \n",
-		len(allRegexps), count, float64(globM2.TotalAlloc-globM1.TotalAlloc)/1000/1000, time.Duration(elapsed).Round(time.Microsecond))
+	fmt.Printf("  [%v regexps] count=%v, compiled_mem=%.2fMB, mem=%.2fMB, time=%v \n",
+		len(allRegexps), count,
+		float64(globM2.TotalAlloc-globM1.TotalAlloc)/1000/1000,
+		float64(globM3.TotalAlloc-globM1.TotalAlloc)/1000/1000,
+		time.Duration(elapsed).Round(time.Microsecond),
+	)
 	return nil
 }

@@ -15,16 +15,17 @@ import (
 const version = "1.0.0"
 
 type Config struct {
-	IsDisplayOutput    bool
-	IsGroupRun         bool
-	IsPrintGroupRegexp bool
-	RegexFilePath      string
-	ScanFilePath       string
-	NumberMatching     int
-	NumberNonMatching  int
-	repeatScanTimes    int
-	testCases          map[string]RegexpEngine
-	execOrder          []string
+	IsDisplayOutput     bool
+	IsGroupRun          bool
+	IsPrintGroupRegexp  bool
+	GenerateNonMatching bool
+	RegexFilePath       string
+	ScanFilePath        string
+	NumberMatching      int
+	NumberNonMatching   int
+	repeatScanTimes     int
+	testCases           map[string]RegexpEngine
+	execOrder           []string
 }
 
 var config Config
@@ -44,9 +45,7 @@ var RootCmd = &cobra.Command{
 			"yara":    &engines.Yara{},
 			"regexp2": &engines.Regexp2{},
 		}
-
 		config.execOrder = []string{"rure", "pcre", "re2", "hyper", "yara", "regexp2", "default"}
-
 		initRegexps()
 	},
 
@@ -71,7 +70,7 @@ var RootCmd = &cobra.Command{
 		}
 
 		fmt.Println("Generate data...")
-		var data = bytes.Repeat([]byte("mail@mail.co number=+71112223334 SSN:123-45-6789 1.1.1.1 3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5 йцук"), config.repeatScanTimes)
+		var data = bytes.Repeat([]byte("123@mail.co nümbr=+71112223334 SSN:123-45-6789 http://1.1.1.1 3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5 Й"), config.repeatScanTimes)
 		var locData *[]byte
 		locData = &data
 
@@ -103,7 +102,6 @@ var RootCmd = &cobra.Command{
 				}
 			}
 		}
-
 		return nil
 	},
 }
@@ -112,8 +110,9 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&config.IsDisplayOutput, "display", "d", false, "Display matched results")
 	RootCmd.PersistentFlags().BoolVarP(&config.IsGroupRun, "group", "g", false, "Run grouped regexps (not individually)")
 	RootCmd.PersistentFlags().BoolVarP(&config.IsPrintGroupRegexp, "print", "p", false, "Print constructed group regexp")
-	//RootCmd.PersistentFlags().StringVarP(&config.RegexFilePath, "rfile", "r", "./test/regexps.txt", "Host address to run server")
-	//RootCmd.PersistentFlags().StringVarP(&config.ScanFilePath, "sfile", "s", "./test/scanfile.txt", "Host address to run server")
+	RootCmd.PersistentFlags().BoolVarP(&config.GenerateNonMatching, "nm", "", false, "Generate non-matching regexps from existing")
+	// RootCmd.PersistentFlags().StringVarP(&config.RegexFilePath, "rfile", "r", "./test/regexps.txt", "File with newline separated and named regexps")
+	// RootCmd.PersistentFlags().StringVarP(&config.ScanFilePath, "sfile", "s", "./test/scanfile.txt", "File with text to scan")
 	RootCmd.PersistentFlags().IntVarP(&config.NumberMatching, "matching", "m", 0, "Number of additional matching regexps")
 	RootCmd.PersistentFlags().IntVarP(&config.NumberNonMatching, "nonmatching", "n", 0, "Number of additional non-matching regexps")
 }

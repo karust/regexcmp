@@ -21,7 +21,7 @@ func (re *Re2) Compile(name, regexpr string) (err error) {
 func (re *Re2) CompileMany(expressions map[string]string) (err error) {
 	finalRegexp := ""
 	for name, regexpr := range expressions {
-		regexpr = fmt.Sprintf("(?P<%v>%s)|", name, regexpr)
+		regexpr = fmt.Sprintf("(?P<%s>%s)|", name, regexpr)
 		finalRegexp += regexpr
 	}
 	finalRegexp = finalRegexp[:len(finalRegexp)-1]
